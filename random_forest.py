@@ -11,6 +11,10 @@ class RandomForest:
 
     def fit(self, X, y):
         self.trees = []
+        # THE FIX: if n_features isn't set, force it to be the square root of total columns
+        if self.n_features is None:
+            self.n_features = int(np.sqrt(X.shape[1]))
+            
         for _ in range(self.n_trees):
             tree = DecisionTree(
                 max_depth=self.max_depth,
