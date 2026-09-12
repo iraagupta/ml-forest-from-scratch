@@ -94,6 +94,8 @@ class DecisionTree:
         return left_idxs, right_idxs
 
     def _most_common_label(self, y):
+        if len(y) == 0:
+            return 0 # literally just guessing class 0 if the leaf is empty so we don't crash 😭
         return np.bincount(y).argmax()
 
     def predict(self, X):
