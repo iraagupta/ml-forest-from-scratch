@@ -20,6 +20,9 @@ class DecisionTree:
         self.root = None
 
     def _gini(self, y):
+        """Calculates Gini Impurity: 1 - sum(p_i^2)"""
+        if len(y) == 0:
+            return 0.0
         hist = np.bincount(y)
         ps = hist / len(y)
         return 1.0 - np.sum(ps ** 2)
