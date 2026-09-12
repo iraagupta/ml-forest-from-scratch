@@ -1,33 +1,36 @@
 import numpy as np
 
 class Node:
+    # literally just a box in our flowchart
     def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None):
-        self.feature = feature       # index of column to split on
-        self.threshold = threshold   # value boundary for split
-        self.left = left             # left child node (<= threshold)
-        self.right = right           # right child node (> threshold)
-        self.value = value           # class label if this is a leaf node
+        self.feature = feature       # which column are we judging rn
+        self.threshold = threshold   # the cutoff point (like is age <= 18)
+        self.left = left             # path for yes
+        self.right = right           # path for no
+        self.value = value           # if it's the end of the line, what's the final answer
 
     def is_leaf_node(self):
+        # checking if we actually have an answer yet
         return self.value is not None
 
 
 class DecisionTree:
     def __init__(self, min_samples_split=2, max_depth=100, n_features=None):
-        self.min_samples_split = min_samples_split
-        self.max_depth = max_depth
-        self.n_features = n_features
+        self.min_samples_split = min_samples_split  # min data points needed to keep splitting
+        self.max_depth = max_depth                  # stopping it from overthinking
+        self.n_features = n_features                # how many columns we randomly pick
         self.root = None
 
     def _gini(self, y):
-        """Calculates Gini Impurity: 1 - sum(p_i^2)"""
+        # calculating how "mixed up" the data is (0 means pure, perfect split)
         if len(y) == 0:
-            return 0.0
+            return 0.0 # dodging a zero division error bc math is hard 😭
         hist = np.bincount(y)
         ps = hist / len(y)
         return 1.0 - np.sum(ps ** 2)
 
     def fit(self, X, y):
+        # figuring out how many columns we're dealing with
         self.n_features = X.shape[1] if not self.n_features else min(X.shape[1], self.n_features)
         self.root = self._build_tree(X, y)
 
@@ -35,14 +38,16 @@ class DecisionTree:
         n_samples, n_feats = X.shape
         n_labels = len(np.unique(y))
 
-        # Stopping criteria for leaf node creation
+        # time to stop growing if it hit the limit or everyone is the same category
         if (depth >= self.max_depth or n_labels == 1 or n_samples < self.min_samples_split):
             leaf_value = self._most_common_label(y)
             return Node(value=leaf_value)
 
+        # pick random columns so the trees don't all look identical
         feat_idxs = np.random.choice(n_feats, self.n_features, replace=False)
         best_feat, best_thresh = self._best_split(X, y, feat_idxs)
 
+        # recursively splitting... basically tree-ception
         left_idxs, right_idxs = self._split(X[:, best_feat], best_thresh)
         left = self._build_tree(X[left_idxs, :], y[left_idxs], depth + 1)
         right = self._build_tree(X[right_idxs, :], y[right_idxs], depth + 1)
@@ -53,6 +58,7 @@ class DecisionTree:
         best_gain = -1
         split_idx, split_threshold = None, None
 
+        # testing literally every single cutoff point to find the least messy split
         for feat_idx in feat_idxs:
             X_column = X[:, feat_idx]
             thresholds = np.unique(X_column)
@@ -73,6 +79,7 @@ class DecisionTree:
         if len(left_idxs) == 0 or len(right_idxs) == 0:
             return 0
 
+        # calculating the vibe shift after the split
         n = len(y)
         n_l, n_r = len(left_idxs), len(right_idxs)
         gini_l, gini_r = self._gini(y[left_idxs]), self._gini(y[right_idxs])
@@ -81,6 +88,7 @@ class DecisionTree:
         return parent_gini - child_gini
 
     def _split(self, X_column, split_thresh):
+        # literally just grouping them into yes and no buckets
         left_idxs = np.argwhere(X_column <= split_thresh).flatten()
         right_idxs = np.argwhere(X_column > split_thresh).flatten()
         return left_idxs, right_idxs
@@ -92,6 +100,7 @@ class DecisionTree:
         return np.array([self._traverse_tree(x, self.root) for x in X])
 
     def _traverse_tree(self, x, node):
+        # walking down the flowchart until we hit a leaf
         if node.is_leaf_node():
             return node.value
 
