@@ -29,3 +29,9 @@ their_acc = np.sum(their_preds == y_test) / len(y_test)
 print(f"👔 sklearn's tree acc:  {their_acc:.4f}")
 
 print("=============================\n")
+
+# if we are within 5% of sklearn, we take the W
+if our_acc >= their_acc - 0.05:
+    print("✅ STATUS: PASS! our math is solid")
+else:
+    print("❌ STATUS: FAIL! back to the drawing board")
